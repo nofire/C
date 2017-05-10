@@ -164,9 +164,9 @@ BYTE Init(DSCB BoardHandle, unsigned long int Steuerwort) {
         io_out16(DIR1,0x0000);      // Konfiguriert alle Bits von Port 1 als Eingang
         io_out16(DIR0,0xFFFF);      // Konfiguriert alle Bits von Port 0 als Ausgang
         Board_allocated  = 1;
-        Port_A_Direction = 1;
+        Port_A_Direction = 0;
         Port_B_Direction = 1;
-        Port_C_Direction = 1;
+        Port_C_Direction = 0;
         Port_D_Direction = 1;
         break;
 
@@ -243,6 +243,25 @@ BYTE Init(DSCB BoardHandle, unsigned long int Steuerwort) {
     }
 
     }
+
+
+    // Port D gelesen wird, so muss InputByte den dualen Zahlenwert,
+    // der an den bits 15-8 des Port 1 anliegt,
+    // mittels DigitalValue zurück geliefert werden
+
+
+
+    // Port C gelesen wird, so muss InputByte den dualen Zahlenwert,
+    // der an den bits 7-0 des Port 1 anliegt,
+    // mittels DigitalValue zurück geliefert werden
+
+    // Port B gelesen wird, so muss InputByte den dualen Zahlenwert,
+    // der an den bits 15-8 des Port 0 anliegt,
+    // mittels DigitalValue zurück geliefert werden
+
+    // Port A gelesen wird, so muss InputByte den dualen Zahlenwert,
+    // der an den bits 7-0 des Port 0 anliegt,
+    // mittels DigitalValue zurück geliefert werden
 
     return 0; // 0 -> kein Fehler
 
