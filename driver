@@ -16,19 +16,21 @@ unsigned short int portvalue;
 
 BHandle BoardHandle_Data;
 DSCB GlobalBoardHandle = &BoardHandle_Data;
-BYTE Board_allocated;
-BYTE Port_A_Direction; // PA 0 = 0x90;
-BYTE Port_B_Direction; // PB 1 = 0x82;
-BYTE Port_C_Direction; // PC 2 = 0x88;
-BYTE Port_D_Direction; // PD 3 = 0x81;
 
 BYTE Init(DSCB BoardHandle, unsigned long int Steuerwort) {
+    BYTE Board_allocated;
+
+    BYTE Port_A_Direction = Steuerwort & 0b00000001; // PA 0 = 0x90;
+    BYTE Port_B_Direction = Steuerwort & 0b00000010; // PB 1 = 0x82;
+    BYTE Port_C_Direction = Steuerwort & 0b00000100; // PC 2 = 0x88;
+    BYTE Port_D_Direction = Steuerwort & 0b00001000; // PD 3 = 0x81;
+
 
     /*Ports 0,1,3,4 auslesen*/
     switch(Steuerwort){
 
         case PA:                                                           // Eingang Port A
-            if(Port_A_Direction == (Steuerwort & 0b00000001)){
+            if(Port_A_Direction){
                 io_out16(DIR1,0x0000);
                 io_out16(DIR0,0xFFFF);
                 Board_allocated  = 1;
@@ -41,7 +43,7 @@ BYTE Init(DSCB BoardHandle, unsigned long int Steuerwort) {
 
 
         case PB:                                                            // Eingang Port B
-            if(Port_A_Direction == (Steuerwort & 0b00000010)){
+            if(Port_B_Direction){
                 io_out16(DIR1,0x0000);
                 io_out16(DIR0,0xFFFF);
                 Board_allocated  = 1;
@@ -50,12 +52,11 @@ BYTE Init(DSCB BoardHandle, unsigned long int Steuerwort) {
                 Port_C_Direction = 1;
                 Port_D_Direction = 1;
                 break;
-
             }
 
 
         case PC:                                                            // Eingang Port C
-            if(Port_A_Direction == (Steuerwort & 0b00000100)){
+            if(Port_C_Direction){
                 io_out16(DIR1,0x0000);
                 io_out16(DIR0,0xFFFF);
                 Board_allocated  = 1;
@@ -64,12 +65,11 @@ BYTE Init(DSCB BoardHandle, unsigned long int Steuerwort) {
                 Port_C_Direction = 0;
                 Port_D_Direction = 1;
                 break;
-
             }
 
 
         case PD:                                                             // Eingang Port D
-            if(Port_A_Direction == (Steuerwort & 0b00001000)){
+            if(Port_D_Direction){
                 io_out16(DIR1,0x0000);
                 io_out16(DIR0,0xFFFF);
                 Board_allocated  = 1;
@@ -78,7 +78,6 @@ BYTE Init(DSCB BoardHandle, unsigned long int Steuerwort) {
                 Port_C_Direction = 1;
                 Port_D_Direction = 0;
             break;
-
             }
         }
 
@@ -87,44 +86,31 @@ BYTE Init(DSCB BoardHandle, unsigned long int Steuerwort) {
 
 BYTE InputByte(DSCB BoardHandle, BYTE Port, BYTE *DigitalValue) {
 	
+unsigned long int Steuerwort;
 
-    // Port D gelesen wird, so muss InputByte den dualen Zahlenwert,
-    // der an den bits 15-8 des Port 1 anliegt,
-    // mittels DigitalValue zurück geliefert werden
-
-
-
-    // Port C gelesen wird, so muss InputByte den dualen Zahlenwert,
-    // der an den bits 7-0 des Port 1 anliegt,
-    // mittels DigitalValue zurück geliefert werden
-
-    // Port B gelesen wird, so muss InputByte den dualen Zahlenwert,
-    // der an den bits 15-8 des Port 0 anliegt,
-    // mittels DigitalValue zurück geliefert werden
-
-    // Port A gelesen wird, so muss InputByte den dualen Zahlenwert,
-    // der an den bits 7-0 des Port 0 anliegt,
-    // mittels DigitalValue zurück geliefert werden
-
-
-
+    BYTE Port_C_Direction = Steuerwort & 0b00000100; // PC 2 = 0x88;
+    BYTE Port_D_Direction = Steuerwort & 0b00001000; // PD 3 = 0x81;
 
 
     // Eingang Port 1
     switch(Port){
 
-    case 0x81:
+    case PD:
+        // Port D --> dualen Zahlenwert, bits 15-8 des Port 1 anliegt, mittels DigitalValue zurück liefern
             if(Port_D_Direction == 0){
-                putstring("Port D als Eingang für das obere Byte von Port 1 gesetzt\n");
-                portvalue = io_in16(IN);
+                //portvalue = io_in16(IN);
                 portvalue = (portvalue >> 8)&0xFF;
-                /*DigitalValue = portvalue;*/
+                DigitalValue = portvalue;
+
+        // Gebe Dualen Wert zurück
+                putstring(*DigitalValue);
                 break;
     }
 
-    case 0x88:
+    case PC:
+        // Port C --> dualen Zahlenwert, bits 7-0 des Port 1 anliegt, mittels DigitalValue zurück liefern
+
             if(Port_C_Direction == 0){
-                putstring("Port C als Eingang für das untere Byte von Port 1 gesetzt\n");
                 break;
     }
 
@@ -133,23 +119,30 @@ BYTE InputByte(DSCB BoardHandle, BYTE Port, BYTE *DigitalValue) {
     // 1 -> ungültiger BoardHandle
     // 2 -> ungültiger Port
 
-    return 0;                           // 0 -> kein Fehler
+    return 0;
 }
 
 BYTE OutputByte(DSCB BoardHandle, BYTE Port, BYTE DigitalValue) {
 	
+    unsigned long int Steuerwort;
+    BYTE Port_A_Direction = Steuerwort & 0b00000001; // PA 0 = 0x90;
+    BYTE Port_B_Direction = Steuerwort & 0b00000010; // PB 1 = 0x82;
 
     switch(Port){
 
-    case 0x82:
+    case PB:
+        // Port B --> dualen Zahlenwert, bits 15-8 des Port 0 anliegt, mittels DigitalValue zurück liefern
+
             if(Port_B_Direction == 0){
-                putstring("Port B als Eingang für das obere Byte von Port 0 gesetzt\n");
+             //   putstring("Port B als Eingang für das obere Byte von Port 0 gesetzt\n");
                 break;
             }
 
-    case 0x90:
+
+    case PA:
+        // Port A --> dualen Zahlenwert, bits 7-0 des Port 0 anliegt, mittels DigitalValue zurück liefern
             if(Port_A_Direction == 0){
-                putstring("Port A als Eingang für das untere Byte von Port 0 gesetzt\n");
+             //   putstring("Port A als Eingang für das untere Byte von Port 0 gesetzt\n");
                 break;
             }
     }
@@ -166,7 +159,7 @@ BYTE Free(DSCB BoardHandle) {
 
     // 1 -> ungültiger BoardHandle
 	
-    return 0;                           // 0 -> kein Fehler
+    return 0;
 
 }
 
