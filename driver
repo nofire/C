@@ -12,7 +12,7 @@ typedef struct BHandle_Data {
 	BYTE Port_D_Direction;
 } BHandle;
 
-unsigned short int portvalue;
+unsigned short int portvalue, help;
 
 BHandle BoardHandle_Data;
 DSCB GlobalBoardHandle = &BoardHandle_Data;
@@ -86,68 +86,102 @@ BYTE Init(DSCB BoardHandle, unsigned long int Steuerwort) {
 
 BYTE InputByte(DSCB BoardHandle, BYTE Port, BYTE *DigitalValue) {
 	
-unsigned long int Steuerwort;
-
-    BYTE Port_C_Direction = Steuerwort & 0b00000100; // PC 2 = 0x88;
-    BYTE Port_D_Direction = Steuerwort & 0b00001000; // PD 3 = 0x81;
-
+unsigned long int Steuerwort, help;
 
     // Eingang Port 1
     switch(Port){
 
-    case PD:
-        // Port D --> dualen Zahlenwert, bits 15-8 des Port 1 anliegt, mittels DigitalValue zurück liefern
-            if(Port_D_Direction == 0){
-                //portvalue = io_in16(IN);
-                portvalue = (portvalue >> 8)&0xFF;
-                DigitalValue = portvalue;
+    case PA:   // Einlesen eines Bytes von Port B
+        if (InputByte(BoardHandle, PA, &help) != 0){
+            putstring("Byte konnte nicht von Port A gelesen werden\n");
+            wait_for_return;
+            return(-1);
+        }else if(InputByte(BoardHandle, PA, &help) == 0){
+            putstring("Byte konnte von Port A gelesen werden\n");
+            portvalue = (portvalue)&0xFF;
+            *DigitalValue = portvalue;
+            return *DigitalValue;
+        }
+    break;
 
-        // Gebe Dualen Wert zurück
-                putstring(*DigitalValue);
-                break;
-    }
+    case PB:
+        if (InputByte(BoardHandle, PB, &help) != 0){
+            putstring("Byte konnte nicht von Port B gelesen werden\n");
+            wait_for_return;
+            return(-1);
+        } else if(InputByte(BoardHandle, PB, &help) == 0){
+            putstring("Byte konnte von Port B gelesen werden\n");
+            portvalue = (portvalue >> 8)&0xFF;
+            *DigitalValue = portvalue;
+            return *DigitalValue;
+        }
+    break;
 
     case PC:
-        // Port C --> dualen Zahlenwert, bits 7-0 des Port 1 anliegt, mittels DigitalValue zurück liefern
+        if (InputByte(BoardHandle, PC, &help) != 0){
+            putstring("Byte konnte nicht von Port C gelesen werden\n");
+            wait_for_return;
+            return(-1);
+        }else if(InputByte(BoardHandle, PC, &help) == 0){
+            putstring("Byte konnte nicht von Port C gelesen werden\n");
+            //portvalue = io_in16(IN);
+            portvalue = (portvalue)&0xFF;
+            *DigitalValue = portvalue;
 
-            if(Port_C_Direction == 0){
-                break;
+          return(*DigitalValue);
+    break;
+
+    case PD:
+        if (InputByte(BoardHandle, PD, &help) != 0){
+            putstring("Byte konnte nicht von Port D gelesen werden\n");
+            wait_for_return;
+            return(-1);
+        }else if(InputByte(BoardHandle, PD, &help) == 0){
+            putstring("Byte konnte nicht von Port D gelesen werden\n");
+            //   portvalue = io_in16(IN);
+            portvalue = (portvalue >> 8)&0xFF;
+            DigitalValue = portvalue;
+
+            return(*DigitalValue);
+            }
+
+    break;
     }
+}
 
-    }
-
+}
     // 1 -> ungültiger BoardHandle
     // 2 -> ungültiger Port
 
-    return 0;
-}
+
+
 
 BYTE OutputByte(DSCB BoardHandle, BYTE Port, BYTE DigitalValue) {
 	
     unsigned long int Steuerwort;
-    BYTE Port_A_Direction = Steuerwort & 0b00000001; // PA 0 = 0x90;
-    BYTE Port_B_Direction = Steuerwort & 0b00000010; // PB 1 = 0x82;
-
     switch(Port){
 
     case PB:
         // Port B --> dualen Zahlenwert, bits 15-8 des Port 0 anliegt, mittels DigitalValue zurück liefern
 
-            if(Port_B_Direction == 0){
-             //   putstring("Port B als Eingang für das obere Byte von Port 0 gesetzt\n");
-                break;
-            }
+
 
 
     case PA:
         // Port A --> dualen Zahlenwert, bits 7-0 des Port 0 anliegt, mittels DigitalValue zurück liefern
-            if(Port_A_Direction == 0){
-             //   putstring("Port A als Eingang für das untere Byte von Port 0 gesetzt\n");
-                break;
-            }
+
+        // Ausgabe des eingelesenen Bytes auf Port A
+        if (OutputByte(BoardHandle, PA, help) != 0){
+            putstring("Byte konnte nicht ausgegeben werden\n");
+            wait_for_return;
+            return(-1);
+        }else if(OutputByte(BoardHandle, PA, help) != 0){
+            io_out16(DIR1,0x0000);
+            portvalue = (portvalue<<8) &0xFF;
+            return 0;
+        }return 2;
     }
 
-    // 1 -> ungültiger BoardHandle
     // 2 -> ungültiger Port
     // 3 -> es wurde versucht etwas auf einen als Eingang konfigurierten Port auszugeben
 
