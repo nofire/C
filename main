@@ -1,0 +1,93 @@
+
+// Programm: Satz von Treiberfunktionen (eine Treiberbibliothek) für den Zugriff auf
+// den digitalen Port 1 des SimuC-Mikrocontrollers schreiben.
+#include "simuc.h"
+#include "io_treiber.h"
+
+typedef enum{Steht,StarteRunter,StarteRauf,Notaus,FahreRauf_MIT_OF,
+             FahreRauf_OHNE_OF,FahreRunter_MIT_OF,FahreRunter_OHNE_OF} state_t;
+
+#define BIT_T2		5
+#define BIT_T1		4
+#define BIT_ESR		3
+#define BIT_ESL		2
+
+#define BIT_M_Re	2
+#define BIT_M_Li	1
+#define BIT_M_An	0
+
+#define wait_for_return
+
+/* Controllfunctions */
+static long int startPosition, endPosition, inputPort1,
+                inputPort0, inputPortD, inputPortC, inputPortB, inputPortA;
+
+
+
+int emain(){
+    /* Variablen deklarieren */
+
+   // io_out16(DIR0, 0x0000);         // Ausgang: Bits 15 - 8 Eingang: Bits 7 - 0
+
+    /*Hardware konfigurieren*/
+    //io_out16(DIR1, 0x00FF);         // Ausgang: Bits 15 - 8 Eingang: Bits 7 - 0
+   // io_out16(DIR0, 0xFF00);         // Ausgang: Bits 15 - 8 Eingang: Bits 7 - 0 //***??
+
+    //inputPort1 = io_in16(IN1);      // Liest die am Port 1 anliegende 16 Bit ein & in readPort1 ablegen
+    //io_out16(OUT0, inputPort1);
+
+  //  inputPort0 = io_in16(IN1);      // Liest die am Port 0 anliegende 16 Bit ein & in readPort1 ablegen
+   // io_out16(OUT0, inputPort0);
+
+   // Ports auf 8 Bit für IO gesetzt
+
+   // inputPortD = inputPort1 << 8;
+   // inputPortC = inputPortD >> 8;
+
+   // inputPortB = inputPort0 << 8;
+   // inputPortA = inputPortB >> 8;
+
+    INIT_BM_WITH_REGISTER_UI; // Hier unbedingt einen Break-Point setzen !!!
+
+	
+	// Hier die Treiberfunktionen aufrufen und testen (Aufgabe 1)
+
+    DSCB BoardHandle;                                                     // Selbstdefinierter Datentyp, hinter dem sich eine Struktur zur Verwaltung des Boards verbirgt
+    BYTE dscDIOInitAndSetConfig(DSCB *BoardHandleZeiger, BYTE Steuerwort);// Init den Treiber, reserviert & config. die Hardware.
+
+
+    /* Start driver, reserve & config hardware */
+
+    if(Init(&BoardHandle,PA)!=0){
+        putstring("Board konnte nicht initialisiert werden\n");
+        wait_for_return;
+        return(-1);
+    }
+
+
+ // INPUTS
+
+	// Ab hier beginnt die Endlosschleife fuer den Automaten (Aufgabe 2)
+	while(1) {
+
+		SYNC_SIM; 
+
+		// Hier die Eingabesignale einlesen
+		// ...
+
+
+		// Hier die Steuerungsfunktion aufrufen
+		// ...
+
+
+
+
+		// Hier die Ausgabesignale ausgeben
+		// ...
+
+
+	} // while(1)..
+
+	
+}
+
