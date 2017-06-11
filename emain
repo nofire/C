@@ -1,0 +1,328 @@
+/*
+*  SimuC-Mikrocontroller
+*
+*  1) Driver Library: Accessing Port 1
+*
+*  2) Escalatorcontroller
+*
+*
+*  Author Lisa Nafeie
+*
+*  Initial date: May 13, 2017
+*  Last updated: May 23, 2017
+*
+*/
+
+#include "simuc.h"
+#include "io_treiber.h"
+
+typedef enum{Steht,StarteRunter,StarteRauf,Notaus,FahreRauf_MIT_OF,FahreRauf_OHNE_OF,FahreRunter_MIT_OF,FahreRunter_OHNE_OF} state_t;
+
+#define BIT_T2		5
+#define BIT_T1		4
+#define BIT_ESR		3
+#define BIT_ESL		2
+
+#define BIT_M_Re	2
+#define BIT_M_Li	1
+#define BIT_M_An	0
+
+
+/* Controllfunctions */
+static long int startPos, endPos;
+
+void steuerungsfunktion (USHORT* M_Re,
+                         USHORT* M_Li,
+                         USHORT* M_An,
+
+
+                         USHORT ESR,
+                         USHORT ESL,
+                         USHORT Not,
+                         USHORT Betrieb,
+                         state_t* state_p,
+
+                         long int aktPos
+
+                         )
+{
+
+
+    switch(*state_p){
+
+        case Steht:
+
+            *M_Re = 0;
+            *M_Li = 0;
+            *M_An = 0;
+
+            if(ESR == 1 && ESL == 0){
+
+                *state_p = StarteRauf;
+
+            }else if(ESL == 1){
+
+                *state_p = StarteRunter;
+
+            }if (Not == 1){
+                *state_p = Notaus;
+            }
+
+            break;
+
+        case StarteRunter:
+            *M_Re = 1;
+            *M_Li = 0;
+            *M_An = 1;
+
+            startPos = aktPos;
+            endPos =(startPos + 60000)%65535;
+
+            if(startPos > endPos){
+                *state_p = FahreRunter_MIT_OF;
+
+            }else if(startPos <= endPos){
+                *state_p = FahreRunter_OHNE_OF;
+
+            }
+            if (Not == 1){ *state_p = Notaus;
+                        }
+
+            break;
+
+        case StarteRauf:
+
+            *M_Re = 0;
+            *M_Li = 1;
+            *M_An = 1;
+
+            startPos = aktPos;
+            endPos =(startPos - 60000)%65535;
+
+            if(endPos < 0){
+                endPos= endPos+65535;
+
+            }
+
+            if(startPos < endPos){
+                *state_p = FahreRauf_MIT_OF;
+
+            }else if(startPos >= endPos){
+                *state_p = FahreRauf_OHNE_OF;
+
+            }
+            if (Not == 1){
+                            *state_p = Notaus;
+                        }
+
+        break;
+
+        case FahreRauf_OHNE_OF:
+            *M_Re = 0;
+            *M_Li = 1;
+            *M_An = 1;
+
+            if(ESR == 1){
+                *state_p = StarteRauf;
+            }else if((aktPos < endPos) || (aktPos > startPos)){
+                *state_p = Steht;
+             }else if(Not == 1){ *state_p = Notaus;}
+
+        break;
+        case FahreRauf_MIT_OF:
+            *M_Re = 0;
+            *M_Li = 1;
+            *M_An = 1;
+
+            if(ESR == 1){
+                *state_p = StarteRauf;
+            }else if((aktPos < endPos) && (aktPos > startPos)){
+                 *state_p = Steht;
+            }else if(Not == 1){ *state_p = Notaus;}
+
+            break;
+
+        case FahreRunter_OHNE_OF:
+            *M_Re = 1;
+            *M_Li = 0;
+            *M_An = 1;
+
+            if(ESL == 1){
+                *state_p = StarteRunter;
+            }else if((aktPos < endPos) || (aktPos > startPos)){
+                *state_p = Steht;
+             }else if(Not == 1){ *state_p = Notaus;}
+
+        break;
+
+
+        case FahreRunter_MIT_OF:
+            *M_Re = 1;
+            *M_Li = 0;
+            *M_An = 1;
+
+            if(ESL == 1){
+                *state_p = StarteRunter;
+            }else if((aktPos > endPos) && (aktPos > startPos)){
+                *state_p = Steht;
+             }else if(Not == 1){ *state_p = Notaus;}
+
+        break;
+
+        case Notaus:
+            *M_Re = 0;
+            *M_Li = 0;
+            *M_An = 0;
+
+        if(Betrieb == 1&&Not==0){  *state_p = Steht;
+        }
+        break;
+
+        default:
+
+            *state_p =  Notaus;
+
+            *M_Re = 0;
+            *M_Li = 0;
+            *M_An = 0;
+
+            break;
+
+    }
+}
+
+int emain(){
+    /* Variablen deklarieren */
+
+    INIT_BM_WITH_REGISTER_UI; // Hier unbedingt einen Break-Point setzen !!!
+
+	
+	// Hier die Treiberfunktionen aufrufen und testen (Aufgabe 1)
+
+    DSCB BoardHandle=GlobalBoardHandle;   //Init BoardHandle                                                  // Selbstdefinierter Datentyp, hinter dem sich eine Struktur zur Verwaltung des Boards verbirgt
+    BYTE a;
+
+    /* Start driver, reserve & config hardware */
+
+    if(Init(BoardHandle,0x8B) != 0){
+        return(-1);
+    }
+
+
+    if(InputByte(BoardHandle, PB, &a)!=0){
+        return(-1);
+
+    }
+
+    if(OutputByte(BoardHandle, PA, a)!=0){
+       return(-1);
+
+        // INPUTS
+       }
+
+
+        // Reservierte Hardware wieder freigeben
+        Free(BoardHandle);
+
+	// Ab hier beginnt die Endlosschleife fuer den Automaten (Aufgabe 2)
+
+
+
+        if(Init(BoardHandle,0x9A) != 0){
+            return(-1);
+        }
+
+
+        state_t state_p=Steht;
+
+        while(1) {
+
+            SYNC_SIM;
+
+
+            USHORT M_Re;
+            USHORT M_Li;
+            USHORT M_An;
+
+            USHORT ESR;
+            USHORT ESL;
+            USHORT Not;
+            USHORT Betrieb;
+            long int aktpos;
+
+
+            if(InputByte(BoardHandle, PC, &a)!=0){
+                return(-1);
+            }
+            ESL=(a>>BIT_ESL)&1;
+            ESR=(a>>BIT_ESR)&1;
+            Not=(a>>BIT_T1)&1;
+            Betrieb=(a>>BIT_T2)&1;
+
+            if(InputByte(BoardHandle, PA, &a)!=0){
+                return(-1);
+            }
+            aktpos=a;
+
+            if(InputByte(BoardHandle, PB, &a)!=0){
+                return(-1);
+            }
+            aktpos=(a<<8)|aktpos;
+
+
+            steuerungsfunktion(&M_Re,
+                               &M_Li,
+                               &M_An,
+
+
+                               ESR,
+                               ESL,
+                               Not,
+                               Betrieb,
+                               &state_p,
+
+                               aktpos);
+
+
+            a = 0;
+
+            a = (M_Re<<BIT_M_Re);
+            a = a| (M_Li<<BIT_M_Li);
+            a = a| (M_An<<BIT_M_An);
+
+            if(OutputByte(BoardHandle, PD, a)!=0){
+               return(-1);
+
+
+
+           }
+
+
+
+
+
+
+
+
+
+
+
+
+		// Hier die Eingabesignale einlesen
+		// ...
+
+
+		// Hier die Steuerungsfunktion aufrufen
+		// ...
+
+
+
+
+		// Hier die Ausgabesignale ausgeben
+		// ...
+
+
+	} // while(1)..
+
+	
+}
