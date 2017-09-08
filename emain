@@ -192,14 +192,13 @@ void steuerungsfunktion (USHORT* M_Re,
 }
 
 int emain(){
-    /* Variablen deklarieren */
 
-    INIT_BM_WITH_REGISTER_UI; // Hier unbedingt einen Break-Point setzen !!!
+    INIT_BM_WITH_REGISTER_UI; 
 
 	
 	// Hier die Treiberfunktionen aufrufen und testen (Aufgabe 1)
 
-    DSCB BoardHandle=GlobalBoardHandle;   //Init BoardHandle                                                  // Selbstdefinierter Datentyp, hinter dem sich eine Struktur zur Verwaltung des Boards verbirgt
+    DSCB BoardHandle=GlobalBoardHandle;   
     BYTE a;
 
     /* Start driver, reserve & config hardware */
@@ -216,16 +215,10 @@ int emain(){
 
     if(OutputByte(BoardHandle, PA, a)!=0){
        return(-1);
-
-        // INPUTS
        }
-
 
         // Reservierte Hardware wieder freigeben
         Free(BoardHandle);
-
-	// Ab hier beginnt die Endlosschleife fuer den Automaten (Aufgabe 2)
-
 
 
         if(Init(BoardHandle,0x9A) != 0){
@@ -239,11 +232,9 @@ int emain(){
 
             SYNC_SIM;
 
-
             USHORT M_Re;
             USHORT M_Li;
             USHORT M_An;
-
             USHORT ESR;
             USHORT ESL;
             USHORT Not;
@@ -269,20 +260,15 @@ int emain(){
             }
             aktpos=(a<<8)|aktpos;
 
-
             steuerungsfunktion(&M_Re,
                                &M_Li,
                                &M_An,
-
-
                                ESR,
                                ESL,
                                Not,
                                Betrieb,
                                &state_p,
-
                                aktpos);
-
 
             a = 0;
 
@@ -293,36 +279,6 @@ int emain(){
             if(OutputByte(BoardHandle, PD, a)!=0){
                return(-1);
 
-
-
            }
-
-
-
-
-
-
-
-
-
-
-
-
-		// Hier die Eingabesignale einlesen
-		// ...
-
-
-		// Hier die Steuerungsfunktion aufrufen
-		// ...
-
-
-
-
-		// Hier die Ausgabesignale ausgeben
-		// ...
-
-
-	} // while(1)..
-
-	
+	} 	
 }
